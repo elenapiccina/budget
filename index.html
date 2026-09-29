@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tactile Bento Budget & Savings Tracker</title>
+  
+  <!-- Fonts & CDN Libraries -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            tealPrimary: '#5CA9AF',
+            mintAccent: '#D1EFEF',
+            deepTeal: '#1C3B3E',
+            cardBg: '#F4FBFB',
+            mintLight: '#EBF8F8',
+            coralWarning: '#E07A5F',
+            goldAccent: '#E6B800'
+          },
+          fontFamily: {
+            serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+            sans: ['Montserrat', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --primary: #5CA9AF;
+      --mint: #D1EFEF;
+      --deep-teal: #1C3B3E;
+      --card-bg: #F4FBFB;
+    }
+
+    body {
+      background-color: #EAF4F4;
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(209, 239, 239, 0.6) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(92, 169, 175, 0.15) 0%, transparent 40%);
+      color: #1C3B3E;
+      font-family: 'Montserrat', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    /* Custom Glassmorphism Cards */
+    .bento-card {
+      background: rgba(244, 251, 251, 0.85);
+      border: 1px solid rgba(92, 169, 175, 0.25);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      box-shadow: 0 10px 25px -5px rgba(28, 59, 62, 0.05), 0 8px 10px -6px rgba(28, 59, 62, 0.03);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .bento-card:hover {
+      border-color: rgba(92, 169, 175, 0.5);
+      box-shadow: 0 14px 30px -4px rgba(28, 59, 62, 0.08);
+    }
+
+    /* Tactile Button Dynamics */
+    .tactile-btn {
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+
+    .tactile-btn:active {
+      transform: scale(0.94);
+    }
+
+    /* Liquid Jar Animation */
+    .jar-container {
+      position: relative;
+      width: 80px;
+      height: 110px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 3px solid #5CA9AF;
+      border-radius: 12px 12px 24px 24px;
+      overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(92, 169, 175, 0.2);
+    }
+
+    .jar-cap {
+      width: 50px;
+      height: 10px;
+      background: #1C3B3E;
+      border-radius: 4px;
+      margin: 0 auto 2px auto;
+    }
+
+    .liquid {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, #71C3C9 0%, #5CA9AF 100%);
+      transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .wave {
+      position: absolute;
+      top: -10px;
+      left: 0;
+      width: 200%;
+      height: 12px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,0 C150,90 350,-40 500,40 C650,120 900,10 1200,40 L1200,120 L0,120 Z' fill='%2371C3C9'%3E%3C/path%3E%3C/svg%3E");
+      background-size: 50% 100%;
+      animation: waveMove 3s linear infinite;
+    }
+
+    @keyframes waveMove {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Floating Particles */
+    .particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      animation: floatAndFade 1.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    }
+
+    @keyframes floatAndFade {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6) rotate(0deg); }
+      100% { opacity: 0; transform: translate(-50%, -100px) scale(1.3) rotate(25deg); }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #5CA9AF;
+      border-radius: 10px;
+    }
+
+    /* Progress Ring Animation */
+    .gauge-ring {
+      transition: stroke-dashoffset 0.8s ease-in-out;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6 md:p-8 max-w-7xl mx-auto">
+
+  <!-- Header Bar -->
+  <header class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <div>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-tealPrimary text-white flex items-center justify-center text-xl shadow-md">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <div>
+          <h1 class="font-serif text-2xl sm:text-3xl font-bold text-deepTeal leading-tight">Tactile Budget Radar</h1>
+          <p class="text-xs font-sans text-tealPrimary font-medium tracking-wide">ADHD-FRIENDLY BENTO DASHBOARD</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Header Actions -->
+    <div class="flex items-center gap-3">
+      <!-- Month Switcher -->
+      <div class="flex items-center bg-cardBg border border-tealPrimary/30 rounded-2xl p-1 shadow-sm">
+        <button onclick="changeMonth(-1)" class="tactile-btn w-8 h-8 rounded-xl flex items-center justify-center text-deepTeal hover:bg-mintAccent/60">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+        <span id="currentMonthText" class="font-serif font-bold text-base px-3 text-deepTeal min-w-[110px] text-center">
+          September 2026
+        </span>
+        <button onclick="changeMonth(1)" class="tactile-btn w-8 h-8 rounded-xl flex items-center justify-center text-deepTeal hover:bg-mintAccent/60">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Sound Toggle -->
+      <button id="soundBtn" onclick="toggleSound()" class="tactile-btn bg-cardBg border border-tealPrimary/30 text-deepTeal px-3.5 py-2 rounded-2xl flex items-center gap-2 text-xs font-semibold shadow-sm hover:bg-mintAccent/50">
+        <i id="soundIcon" class="fa-solid fa-volume-high text-tealPrimary"></i>
+        <span id="soundText">Sound ON</span>
+      </button>
+
+      <!-- Add New Item Modal Trigger -->
+      <button onclick="openAddModal()" class="tactile-btn bg-tealPrimary hover:bg-deepTeal text-white px-4 py-2 rounded-2xl text-xs font-bold shadow-md flex items-center gap-2">
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Item</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN BENTO DASHBOARD -->
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+
+    <!-- BENTO 1: Financial Radar Gauge & Safe Daily Spend (Cols 12 or 4) -->
+    <section class="bento-card md:col-span-5 p-6 flex flex-col justify-between relative overflow-hidden">
+      <div class="flex justify-between items-start mb-2">
+        <div>
+          <span class="text-[10px] font-bold tracking-wider text-tealPrimary uppercase font-sans">Overview Radar</span>
+          <h2 class="font-serif text-2xl font-bold text-deepTeal">Financial Flow</h2>
+        </div>
+        <span class="bg-mintAccent text-deepTeal text-xs font-bold px-2.5 py-1 rounded-full border border-tealPrimary/20">
+          <i class="fa-solid fa-shield-heart text-tealPrimary mr-1"></i> Healthy
+        </span>
+      </div>
+
+      <!-- Center Gauge Ring -->
+      <div class="relative my-4 flex items-center justify-center">
+        <svg class="w-48 h-48" viewBox="0 0 120 120">
+          <!-- Background Track -->
+          <circle cx="60" cy="60" r="48" stroke="#D1EFEF" stroke-width="10" fill="none"/>
+          <!-- Active Spent Progress -->
+          <circle id="gaugeProgress" class="gauge-ring" cx="60" cy="60" r="48" stroke="#5CA9AF" stroke-width="10" fill="none"
+                  stroke-dasharray="301.59" stroke-dashoffset="100" stroke-linecap="round"/>
+        </svg>
+
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <span class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</span>
+          <span id="overallRemainingText" class="font-serif text-3xl font-bold text-deepTeal">$1,420</span>
+          <span id="spentPercentText" class="text-[11px] font-semibold text-tealPrimary bg-mintAccent/60 px-2 py-0.5 rounded-md mt-1">
+            35% Spent
+          </span>
+        </div>
+      </div>
+
+      <!-- Safe Daily Spend Pill -->
+      <div class="bg-gradient-to-r from-mintAccent/70 to-mintLight p-3.5 rounded-2xl border border-tealPrimary/30 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl bg-tealPrimary/20 text-tealPrimary flex items-center justify-center text-sm">
+            <i class="fa-solid fa-calculator"></i>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold text-deepTeal uppercase tracking-wider">Safe Daily Spend</div>
+            <div class="text-xs text-gray-600">Calculated for remaining days</div>
+          </div>
+        </div>
+        <div id="safeDailyText" class="font-serif text-xl font-bold text-deepTeal">$47.33/day</div>
+      </div>
+    </section>
+
+    <!-- BENTO 2: Quick Summary Cards & Income vs Budget (Cols 12 or 7) -->
+    <section class="md:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <!-- Card: Total Income -->
+      <div class="bento-card p-5 flex flex-col justify-between">
+        <div class="flex justify-between items-center text-tealPrimary mb-2">
+          <span class="text-xs font-bold tracking-wider uppercase text-gray-500">Monthly Income</span>
+          <i class="fa-solid fa-arrow-down-long bg-mintAccent p-2 rounded-xl text-xs"></i>
+        </div>
+        <div class="font-serif text-3xl font-bold text-deepTeal" id="summaryIncome">$3,800</div>
+        <div class="text-[11px] text-gray-500 mt-2 flex items-center gap-1">
+          <i class="fa-solid fa-[#5CA9AF] fa-circle text-[8px] text-tealPrimary"></i> Active paycheck & side
+        </div>
+      </div>
+
+      <!-- Card: Total Budgeted -->
+      <div class="bento-card p-5 flex flex-col justify-between">
+        <div class="flex justify-between items-center text-tealPrimary mb-2">
+          <span class="text-xs font-bold tracking-wider uppercase text-gray-500">Total Expenses</span>
+          <i class="fa-solid fa-arrow-up-long bg-coralWarning/20 text-coralWarning p-2 rounded-xl text-xs"></i>
+        </div>
+        <div class="font-serif text-3xl font-bold text-deepTeal" id="summarySpent">$1,230</div>
+        <div class="text-[11px] text-gray-500 mt-2">
+          Cap: <span id="summaryCapText" class="font-semibold text-deepTeal">$2,200</span>
+        </div>
+      </div>
+
+      <!-- Card: Saved in Jars -->
+      <div class="bento-card p-5 flex flex-col justify-between">
+        <div class="flex justify-between items-center text-tealPrimary mb-2">
+          <span class="text-xs font-bold tracking-wider uppercase text-gray-500">Total Saved</span>
+          <i class="fa-solid fa-piggy-bank bg-mintAccent p-2 rounded-xl text-xs"></i>
+        </div>
+        <div class="font-serif text-3xl font-bold text-deepTeal" id="summarySaved">$1,150</div>
+        <div class="text-[11px] text-tealPrimary font-medium mt-2">
+          Across 3 Active Jars
+        </div>
+      </div>
+
+      <!-- Quick Action Prompt Banner (Spans 3 cols inside Bento) -->
+      <div class="sm:col-span-3 bento-card p-4 bg-gradient-to-r from-tealPrimary/10 via-mintAccent/40 to-cardBg flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🌱</span>
+          <div>
+            <h4 class="font-serif text-lg font-bold text-deepTeal leading-snug">Mindful Financial Habit</h4>
+            <p class="text-xs text-gray-600">Visualizing where your money flows reduces ADHD impulse anxiety.</p>
+          </div>
+        </div>
+        <button onclick="logQuickExpensePrompt()" class="tactile-btn bg-deepTeal text-white text-xs px-3.5 py-2 rounded-xl font-medium shadow-sm hover:bg-tealPrimary">
+          ⚡ Quick Spend (-$10)
+        </button>
+      </div>
+    </section>
+
+    <!-- BENTO 3: Envelope Budgeting Grid (Full Width) -->
+    <section class="bento-card md:col-span-12 p-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-2">
+        <div>
+          <span class="text-[10px] font-bold tracking-wider text-tealPrimary uppercase font-sans">Tactile Envelopes</span>
+          <h2 class="font-serif text-2xl font-bold text-deepTeal">Category Envelopes</h2>
+        </div>
+        <div class="text-xs text-gray-500">
+          Click <span class="font-semibold text-deepTeal">+ / -</span> to adjust spending on the fly
+        </div>
+      </div>
+
+      <!-- Envelopes Container -->
+      <div id="envelopesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Dynamic Cards rendered here via JS -->
+      </div>
+    </section>
+
+    <!-- BENTO 4: Animated Liquid Savings Jars (Cols 12 or 6) -->
+    <section class="bento-card md:col-span-6 p-6 flex flex-col justify-between">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <span class="text-[10px] font-bold tracking-wider text-tealPrimary uppercase font-sans">Tactile Goals</span>
+          <h2 class="font-serif text-2xl font-bold text-deepTeal">Visual Savings Jars</h2>
+        </div>
+        <button onclick="openAddModal('jar')" class="tactile-btn text-xs bg-mintAccent hover:bg-tealPrimary hover:text-white text-deepTeal font-bold px-3 py-1.5 rounded-xl border border-tealPrimary/30 transition-colors">
+          + New Jar
+        </button>
+      </div>
+
+      <!-- Jars Grid -->
+      <div id="jarsContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Dynamic Jars rendered here via JS -->
+      </div>
+    </section>
+
+    <!-- BENTO 5: ADHD Impulse-Buy "Cool-Down Locker" (Cols 12 or 6) -->
+    <section class="bento-card md:col-span-6 p-6 flex flex-col justify-between">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <span class="text-[10px] font-bold tracking-wider text-coralWarning uppercase font-sans">ADHD Impulse Safeguard</span>
+          <h2 class="font-serif text-2xl font-bold text-deepTeal">Cool-Down Locker</h2>
+        </div>
+        <button onclick="openAddModal('impulse')" class="tactile-btn text-xs bg-coralWarning/20 hover:bg-coralWarning hover:text-white text-deepTeal font-bold px-3 py-1.5 rounded-xl border border-coralWarning/30 transition-colors">
+          + Lock Item
+        </button>
+      </div>
+
+      <p class="text-xs text-gray-600 mb-3">
+        Want to buy something spontaneously? Lock it here for 24-48 hours. If you still want it later, buy it. If you skip it, celebrate saving! 🎉
+      </p>
+
+      <!-- Impulse Locker Items Container -->
+      <div id="impulseContainer" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+        <!-- Dynamic impulse items rendered via JS -->
+      </div>
+    </section>
+
+  </div>
+
+  <!-- MODAL: Add New Item -->
+  <div id="addModal" class="fixed inset-0 bg-deepTeal/40 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-cardBg border border-tealPrimary/30 w-full max-w-md rounded-3xl p-6 shadow-2xl relative animate-fade-in">
+      <button onclick="closeAddModal()" class="absolute top-5 right-5 text-gray-400 hover:text-deepTeal text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 id="modalTitle" class="font-serif text-2xl font-bold text-deepTeal mb-4">Add Budget Envelope</h3>
+
+      <form id="addForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+        <input type="hidden" id="modalType" value="envelope">
+
+        <div>
+          <label class="block text-xs font-bold text-deepTeal uppercase mb-1">Item Title</label>
+          <input type="text" id="inputTitle" required placeholder="e.g. Groceries, Tech Fund, Headphones"
+                 class="w-full bg-white border border-tealPrimary/30 rounded-xl px-3.5 py-2 text-sm text-deepTeal focus:outline-none focus:border-tealPrimary">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label id="labelAmount1" class="block text-xs font-bold text-deepTeal uppercase mb-1">Budget Cap ($)</label>
+            <input type="number" id="inputAmount1" required min="1" step="any" placeholder="300"
+                   class="w-full bg-white border border-tealPrimary/30 rounded-xl px-3.5 py-2 text-sm text-deepTeal focus:outline-none focus:border-tealPrimary">
+          </div>
+          <div id="wrapperAmount2">
+            <label id="labelAmount2" class="block text-xs font-bold text-deepTeal uppercase mb-1">Current Spent ($)</label>
+            <input type="number" id="inputAmount2" value="0" min="0" step="any"
+                   class="w-full bg-white border border-tealPrimary/30 rounded-xl px-3.5 py-2 text-sm text-deepTeal focus:outline-none focus:border-tealPrimary">
+          </div>
+        </div>
+
+        <div id="wrapperCategory" class="hidden">
+          <label class="block text-xs font-bold text-deepTeal uppercase mb-1">Icon Theme</label>
+          <select id="inputIcon" class="w-full bg-white border border-tealPrimary/30 rounded-xl px-3 py-2 text-sm text-deepTeal focus:outline-none">
+            <option value="fa-utensils">🍔 Food & Dining</option>
+            <option value="fa-house">🏠 Housing & Bills</option>
+            <option value="fa-gamepad">🎮 Fun & Hobby</option>
+            <option value="fa-bag-shopping">🛍️ Shopping</option>
+            <option value="fa-plane">✈️ Travel</option>
+            <option value="fa-car">🚗 Transport</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeAddModal()" class="px-4 py-2 text-xs font-bold text-gray-500 hover:text-deepTeal">
+            Cancel
+          </button>
+          <button type="submit" class="tactile-btn bg-tealPrimary hover:bg-deepTeal text-white text-xs font-bold px-5 py-2 rounded-xl shadow-md">
+            Save Item
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       APP STATE PERSISTENCE & INITIAL DEFAULTS
+       ========================================================================== */
+    const STORAGE_KEY = 'TACTILE_BENTO_BUDGET_V1';
+
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    const defaultState = {
+      income: 3800,
+      currentMonthIndex: 8, // Sept
+      currentYear: 2026,
+      envelopes: [
+        { id: 'env-1', title: 'Groceries & Eats', cap: 600, spent: 280, icon: 'fa-utensils' },
+        { id: 'env-2', title: 'Housing & Utilities', cap: 1200, spent: 1200, icon: 'fa-house' },
+        { id: 'env-3', title: 'Fun & Hobbies', cap: 300, spent: 110, icon: 'fa-gamepad' },
+        { id: 'env-4', title: 'Sub-Services & Tech', cap: 150, spent: 45, icon: 'fa-bag-shopping' }
+      ],
+      jars: [
+        { id: 'jar-1', title: 'Japan Trip ⛩️', target: 2000, saved: 1250 },
+        { id: 'jar-2', title: 'New Camera 📸', target: 800, saved: 450 },
+        { id: 'jar-3', title: 'Emergency Cushion 🛡️', target: 3000, saved: 1800 }
+      ],
+      impulseItems: [
+        { id: 'imp-1', title: 'Mechanical Keyboard', price: 140, dateAdded: Date.now() - 3600000 * 18, hoursCooling: 24 },
+        { id: 'imp-2', title: 'Designer Linen Jacket', price: 210, dateAdded: Date.now() - 3600000 * 40, hoursCooling: 48 }
+      ]
+    };
+
+    let state = loadState();
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) { console.error("Error parsing state", e); }
+      }
+      return defaultState;
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderDashboard();
+    }
+
+    /* ==========================================================================
+       WEB AUDIO SYNTHESIZER (No external audio files needed)
+       ========================================================================== */
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundText').innerText = soundEnabled ? "Sound ON" : "Muted";
+      document.getElementById('soundIcon').className = soundEnabled ? "fa-solid fa-volume-high text-tealPrimary" : "fa-solid fa-volume-xmark text-gray-400";
+    }
+
+    function playSynthSound(type) {
+      if (!soundEnabled) return;
+      initAudio();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'pop') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(850, now + 0.08);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } 
+      else if (type === 'coin') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(987.77, now); // B5
+        osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } 
+      else if (type === 'splash') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(250, now);
+        osc.frequency.exponentialRampToValueAtTime(500, now + 0.15);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } 
+      else if (type === 'celebrate') {
+        // Multi-note arpeggio
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C E G C
+        notes.forEach((freq, idx) => {
+          const subOsc = audioCtx.createOscillator();
+          const subGain = audioCtx.createGain();
+          subOsc.type = 'triangle';
+          subOsc.frequency.setValueAtTime(freq, now + idx * 0.06);
+          subGain.gain.setValueAtTime(0.2, now + idx * 0.06);
+          subGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.2);
+          subOsc.connect(subGain);
+          subGain.connect(audioCtx.destination);
+          subOsc.start(now + idx * 0.06);
+          subOsc.stop(now + idx * 0.06 + 0.22);
+        });
+      }
+      else if (type === 'trash') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.linearRampToValueAtTime(120, now + 0.1);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      }
+    }
+
+    /* ==========================================================================
+       PARTICLE BURST FX
+       ========================================================================== */
+    function spawnParticles(x, y, emojis = ['✨', '🫧', '💎', '🎉', '🌱']) {
+      for (let i = 0; i < 6; i++) {
+        const el = document.createElement('div');
+        el.className = 'particle';
+        el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        
+        const offsetX = (Math.random() - 0.5) * 50;
+        const offsetY = (Math.random() - 0.5) * 20;
+
+        el.style.left = `${x + offsetX}px`;
+        el.style.top = `${y + offsetY}px`;
+        el.style.fontSize = `${14 + Math.random() * 10}px`;
+
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1200);
+      }
+    }
+
+    /* ==========================================================================
+       RENDER FUNCTIONS
+       ========================================================================== */
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    function renderDashboard() {
+      // 1. Month Header
+      document.getElementById('currentMonthText').innerText = `${monthNames[state.currentMonthIndex]} ${state.currentYear}`;
+
+      // 2. Calculations
+      const totalCap = state.envelopes.reduce((acc, curr) => acc + curr.cap, 0);
+      const totalSpent = state.envelopes.reduce((acc, curr) => acc + curr.spent, 0);
+      const totalSavedInJars = state.jars.reduce((acc, curr) => acc + curr.saved, 0);
+
+      const remainingBudget = Math.max(0, totalCap - totalSpent);
+      const spentPercent = totalCap > 0 ? Math.min(100, Math.round((totalSpent / totalCap) * 100)) : 0;
+
+      // Safe Daily Spend Calculation
+      const today = new Date();
+      const totalDaysInMonth = new Date(state.currentYear, state.currentMonthIndex + 1, 0).getDate();
+      const currentDay = today.getDate();
+      const daysLeft = Math.max(1, totalDaysInMonth - currentDay + 1);
+      const safeDaily = (remainingBudget / daysLeft).toFixed(2);
+
+      // Update Overview Radar
+      document.getElementById('overallRemainingText').innerText = `$${remainingBudget.toLocaleString()}`;
+      document.getElementById('spentPercentText').innerText = `${spentPercent}% Spent`;
+      document.getElementById('safeDailyText').innerText = `$${safeDaily}/day`;
+
+      // Update Donut Gauge SVG (Radius = 48 -> Perimeter ~301.59)
+      const perimeter = 301.59;
+      const offset = perimeter - (perimeter * (spentPercent / 100));
+      const gauge = document.getElementById('gaugeProgress');
+      gauge.style.strokeDashoffset = offset;
+      gauge.style.stroke = spentPercent > 90 ? '#E07A5F' : '#5CA9AF';
+
+      // Summary Cards
+      document.getElementById('summaryIncome').innerText = `$${state.income.toLocaleString()}`;
+      document.getElementById('summarySpent').innerText = `$${totalSpent.toLocaleString()}`;
+      document.getElementById('summaryCapText').innerText = `$${totalCap.toLocaleString()}`;
+      document.getElementById('summarySaved').innerText = `$${totalSavedInJars.toLocaleString()}`;
+
+      // Render Sub-Sections
+      renderEnvelopes();
+      renderJars();
+      renderImpulseLocker();
+    }
+
+    function renderEnvelopes() {
+      const container = document.getElementById('envelopesContainer');
+      container.innerHTML = '';
+
+      state.envelopes.forEach(env => {
+        const pct = Math.min(100, Math.round((env.spent / env.cap) * 100));
+        const isOver = env.spent > env.cap;
+
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-2xl bg-white/70 border border-tealPrimary/20 flex flex-col justify-between shadow-sm relative group hover:border-tealPrimary transition-all`;
+
+        card.innerHTML = `
+          <div class="flex justify-between items-start mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-mintAccent text-tealPrimary flex items-center justify-center text-xs">
+                <i class="fa-solid ${env.icon || 'fa-wallet'}"></i>
+              </div>
+              <span class="font-serif font-bold text-base text-deepTeal truncate max-w-[120px]">${env.title}</span>
+            </div>
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onclick="editEnvelope('${env.id}')" class="text-xs text-gray-400 hover:text-tealPrimary p-1">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              <button onclick="deleteEnvelope('${env.id}')" class="text-xs text-gray-400 hover:text-coralWarning p-1">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="my-2">
+            <div class="flex justify-between items-baseline text-xs mb-1">
+              <span class="font-bold text-deepTeal">$${env.spent}</span>
+              <span class="text-gray-500">of $${env.cap}</span>
+            </div>
+            <!-- Progress Bar -->
+            <div class="w-full h-2 bg-mintAccent/60 rounded-full overflow-hidden">
+              <div class="h-full ${isOver ? 'bg-coralWarning' : 'bg-tealPrimary'} transition-all duration-500 rounded-full"
+                   style="width: ${pct}%"></div>
+            </div>
+          </div>
+
+          <!-- Quick +/- Buttons -->
+          <div class="flex justify-between items-center pt-2 border-t border-tealPrimary/10">
+            <span class="text-[10px] uppercase font-bold text-gray-400">Log Spend</span>
+            <div class="flex items-center gap-1">
+              <button onclick="adjustEnvelopeSpent('${env.id}', -10, event)" class="tactile-btn w-6 h-6 rounded-md bg-mintAccent/60 text-deepTeal font-bold text-xs hover:bg-mintAccent flex items-center justify-center">
+                -
+              </button>
+              <button onclick="adjustEnvelopeSpent('${env.id}', 10, event)" class="tactile-btn w-6 h-6 rounded-md bg-tealPrimary text-white font-bold text-xs hover:bg-deepTeal flex items-center justify-center">
+                +
+              </button>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function renderJars() {
+      const container = document.getElementById('jarsContainer');
+      container.innerHTML = '';
+
+      state.jars.forEach(jar => {
+        const pct = Math.min(100, Math.round((jar.saved / jar.target) * 100));
+
+        const jarEl = document.createElement('div');
+        jarEl.className = 'flex flex-col items-center bg-white/70 p-3.5 rounded-2xl border border-tealPrimary/20 relative group hover:border-tealPrimary transition-all';
+
+        jarEl.innerHTML = `
+          <!-- Delete button on hover -->
+          <button onclick="deleteJar('${jar.id}')" class="absolute top-2 right-2 text-xs text-gray-300 hover:text-coralWarning opacity-0 group-hover:opacity-100 transition-opacity">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+
+          <!-- Jar Graphic -->
+          <div class="jar-cap"></div>
+          <div class="jar-container mb-3">
+            <div class="liquid" style="height: ${pct}%">
+              <div class="wave"></div>
+            </div>
+          </div>
+
+          <h4 class="font-serif font-bold text-sm text-deepTeal text-center mb-0.5 truncate w-full">${jar.title}</h4>
+          <div class="text-[11px] font-semibold text-tealPrimary mb-2">
+            $${jar.saved} / $${jar.target}
+          </div>
+
+          <button onclick="depositJar('${jar.id}', 10, event)" class="tactile-btn w-full bg-mintAccent hover:bg-tealPrimary hover:text-white text-deepTeal font-bold text-xs py-1.5 rounded-xl border border-tealPrimary/30 transition-colors flex items-center justify-center gap-1">
+            <i class="fa-solid fa-plus text-[10px]"></i> Deposit $10
+          </button>
+        `;
+
+        container.appendChild(jarEl);
+      });
+    }
+
+    function renderImpulseLocker() {
+      const container = document.getElementById('impulseContainer');
+      container.innerHTML = '';
+
+      if (state.impulseItems.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-gray-400 text-xs italic">
+            No items in cool-down! You are impulse-free right now ✨
+          </div>
+        `;
+        return;
+      }
+
+      state.impulseItems.forEach(item => {
+        const elapsedHours = (Date.now() - item.dateAdded) / (1000 * 3600);
+        const hoursLeft = Math.max(0, Math.ceil(item.hoursCooling - elapsedHours));
+        const isReady = hoursLeft <= 0;
+
+        const row = document.createElement('div');
+        row.className = 'bg-white/80 p-3 rounded-2xl border border-tealPrimary/20 flex items-center justify-between gap-3 shadow-sm';
+
+        row.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl ${isReady ? 'bg-mintAccent text-tealPrimary' : 'bg-coralWarning/20 text-coralWarning'} flex items-center justify-center text-xs flex-shrink-0">
+              <i class="fa-solid ${isReady ? 'fa-lock-open' : 'fa-hourglass-half'}"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="font-serif font-bold text-sm text-deepTeal truncate">${item.title}</div>
+              <div class="text-xs text-gray-500 font-medium">
+                $${item.price} • ${isReady ? '<span class="text-tealPrimary font-bold">Ready to decide</span>' : `${hoursLeft}h cool-down`}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <!-- Saved/Skipped Action -->
+            <button onclick="skipImpulseItem('${item.id}', event)" title="Skipped & Saved!" class="tactile-btn bg-mintAccent hover:bg-tealPrimary hover:text-white text-deepTeal px-2.5 py-1.5 rounded-xl text-xs font-bold transition-colors">
+              Saved! 🎉
+            </button>
+            <button onclick="deleteImpulseItem('${item.id}')" title="Delete" class="text-gray-400 hover:text-coralWarning p-1 text-xs">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        `;
+
+        container.appendChild(row);
+      });
+    }
+
+    /* ==========================================================================
+       USER INTERACTION HANDLERS
+       ========================================================================== */
+    function adjustEnvelopeSpent(id, amount, event) {
+      const env = state.envelopes.find(e => e.id === id);
+      if (env) {
+        env.spent = Math.max(0, env.spent + amount);
+        playSynthSound('pop');
+        if (event) spawnParticles(event.clientX, event.clientY);
+        saveState();
+      }
+    }
+
+    function depositJar(id, amount, event) {
+      const jar = state.jars.find(j => j.id === id);
+      if (jar) {
+        jar.saved += amount;
+        playSynthSound('splash');
+        if (event) spawnParticles(event.clientX, event.clientY, ['🫧', '💎', '🪙']);
+        saveState();
+      }
+    }
+
+    function skipImpulseItem(id, event) {
+      const item = state.impulseItems.find(i => i.id === id);
+      if (item) {
+        playSynthSound('celebrate');
+        if (event) spawnParticles(event.clientX, event.clientY, ['🎉', '✨', '💰', '🌟']);
+        state.impulseItems = state.impulseItems.filter(i => i.id !== id);
+        saveState();
+      }
+    }
+
+    function deleteImpulseItem(id) {
+      playSynthSound('trash');
+      state.impulseItems = state.impulseItems.filter(i => i.id !== id);
+      saveState();
+    }
+
+    function deleteEnvelope(id) {
+      playSynthSound('trash');
+      state.envelopes = state.envelopes.filter(e => e.id !== id);
+      saveState();
+    }
+
+    function deleteJar(id) {
+      playSynthSound('trash');
+      state.jars = state.jars.filter(j => j.id !== id);
+      saveState();
+    }
+
+    function changeMonth(delta) {
+      playSynthSound('pop');
+      state.currentMonthIndex += delta;
+      if (state.currentMonthIndex > 11) {
+        state.currentMonthIndex = 0;
+        state.currentYear++;
+      } else if (state.currentMonthIndex < 0) {
+        state.currentMonthIndex = 11;
+        state.currentYear--;
+      }
+      saveState();
+    }
+
+    function logQuickExpensePrompt() {
+      if (state.envelopes.length > 0) {
+        state.envelopes[0].spent += 10;
+        playSynthSound('coin');
+        saveState();
+      }
+    }
+
+    /* ==========================================================================
+       MODAL CONTROLS
+       ========================================================================== */
+    function openAddModal(type = 'envelope') {
+      playSynthSound('pop');
+      document.getElementById('modalType').value = type;
+      const modal = document.getElementById('addModal');
+      const title = document.getElementById('modalTitle');
+      const label1 = document.getElementById('labelAmount1');
+      const wrapper2 = document.getElementById('wrapperAmount2');
+      const wrapperCat = document.getElementById('wrapperCategory');
+
+      if (type === 'envelope') {
+        title.innerText = 'Add Budget Envelope';
+        label1.innerText = 'Budget Cap ($)';
+        wrapper2.classList.remove('hidden');
+        wrapperCat.classList.remove('hidden');
+      } else if (type === 'jar') {
+        title.innerText = 'Add Savings Jar';
+        label1.innerText = 'Target Goal ($)';
+        wrapper2.classList.add('hidden');
+        wrapperCat.classList.add('hidden');
+      } else if (type === 'impulse') {
+        title.innerText = 'Lock Impulse Item';
+        label1.innerText = 'Item Price ($)';
+        wrapper2.classList.add('hidden');
+        wrapperCat.classList.add('hidden');
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.add('hidden');
+      document.getElementById('addForm').reset();
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const type = document.getElementById('modalType').value;
+      const titleVal = document.getElementById('inputTitle').value.trim();
+      const amt1 = parseFloat(document.getElementById('inputAmount1').value) || 0;
+      const amt2 = parseFloat(document.getElementById('inputAmount2').value) || 0;
+      const iconVal = document.getElementById('inputIcon').value;
+
+      if (!titleVal) return;
+
+      if (type === 'envelope') {
+        state.envelopes.push({
+          id: 'env-' + Date.now(),
+          title: titleVal,
+          cap: amt1,
+          spent: amt2,
+          icon: iconVal
+        });
+      } else if (type === 'jar') {
+        state.jars.push({
+          id: 'jar-' + Date.now(),
+          title: titleVal,
+          target: amt1,
+          saved: 0
+        });
+      } else if (type === 'impulse') {
+        state.impulseItems.push({
+          id: 'imp-' + Date.now(),
+          title: titleVal,
+          price: amt1,
+          dateAdded: Date.now(),
+          hoursCooling: 24
+        });
+      }
+
+      playSynthSound('coin');
+      closeAddModal();
+      saveState();
+    }
+
+    /* Initialize App on DOM Ready */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderDashboard();
+    });
+  </script>
+</body>
+</html>
+```
+
+### Key Highlights of the New Design
+1. **Fresh Bento Dashboard Layout**: Replaced the floating line canvas with a structured, tactile Bento Grid combining high-level financial health gauges, category envelopes, animated savings jars, and impulse lockers.
+2. **Color Palette Tokens**: Utilizes Primary Teal (`#5CA9AF`), Soft Mint/Ice Blue (`#D1EFEF`), Deep Teal (`#1C3B3E`), and Muted Light Card backgrounds (`#F4FBFB`).
+3. **Animated CSS Liquid Jars**: Jars show interactive liquid fill height and smooth CSS wave movement that reacts when you click **"Deposit +$10"**.
+4. **ADHD Impulse Cool-Down Locker**: Dedicated section to park impulse purchase ideas during a 24-48 hour cooling period. Clicking **"Saved! 🎉"** triggers a celebration arpeggio audio chime and particle confetti.
+5. **Zero External Audio Files**: Synthesizes pure Web Audio API sound sweeps (pops, coins, splash, and celebration arpeggios).
